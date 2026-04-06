@@ -101,6 +101,9 @@ const Button = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background: ${(props) =>
@@ -293,16 +296,23 @@ const InterstellarLanding = () => {
               flexWrap: "wrap",
             }}
           >
-            <Button
-              primary
-              style={{ padding: "0.8rem 2rem", fontSize: "1rem" }}
+            <a
+              href="https://www.npmjs.com/package/@chuks2001/interstellar-cli/v/1.0.1"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none" }}
             >
-              Get Started{" "}
-              <ChevronRight
-                size={16}
-                style={{ verticalAlign: "middle", marginLeft: "4px" }}
-              />
-            </Button>
+              <Button
+                primary
+                style={{ padding: "0.8rem 2rem", fontSize: "1rem" }}
+              >
+                Get Started{" "}
+                <ChevronRight
+                  size={16}
+                  style={{ verticalAlign: "middle", marginLeft: "4px" }}
+                />
+              </Button>
+            </a>
             <a
               href="https://github.com/Chuks256/Interstellar"
               target="_blank"
@@ -429,7 +439,8 @@ const InterstellarLanding = () => {
         }}
       >
         <div style={{ opacity: 0.4, fontSize: "0.8rem" }}>
-          &copy; 2026 Interstellar CLI. Built for the distributed web.
+          &copy; {new Date().getFullYear()} Interstellar CLI. Built for the
+          distributed web.
         </div>
       </footer>
     </>
