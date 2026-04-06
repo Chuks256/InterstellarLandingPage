@@ -1,23 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
-
 import {
   Terminal,
   Globe,
   Zap,
   Activity,
-  Menu,
-  X,
   ChevronRight,
   Shield,
-  Database,
+  Copy,
+  Check,
   Cpu,
-  Command,
+  Lock,
+  Server,
+  ChevronDown,
+  Bell,
+  Map as MapIcon,
+  Share2,
+  Code,
 } from "lucide-react";
 
 // --- Animations ---
 const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -33,27 +37,180 @@ const GlobalStyle = createGlobalStyle`
     --bg: #000000;
     --accent: #ffffff;
     --gray: #888888;
-    --border: rgba(255, 255, 255, 0.1);
+    --border: rgba(255, 255, 255, 0.08);
+    --glass: rgba(255, 255, 255, 0.03);
+    --green: #00ff85;
+    --yellow: #ffcc00;
+    --red: #ff4d4d;
+    --shadow-heavy: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background-color: var(--bg);
     color: var(--accent);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
+`;
 
-  ::selection {
-    background: rgba(255, 255, 255, 0.2);
+// --- FAQ Styled Components ---
+const FAQContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+  margin: 6rem 0;
+`;
+
+const FAQItem = styled.div`
+  margin-bottom: 0.75rem;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
   }
 `;
+
+const FAQHeader = styled.div`
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+`;
+
+const FAQQuestion = styled.span`
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+`;
+
+const FAQAnswer = styled.div`
+  max-height: ${(props) => (props.isOpen ? "200px" : "0")};
+  padding: ${(props) => (props.isOpen ? "0 1.5rem 1.5rem" : "0 1.5rem")};
+  opacity: ${(props) => (props.isOpen ? "1" : "0")};
+  color: var(--gray);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+`;
+
+// --- ASCII Heatmap Component ---
+const HeatmapContainer = styled.div`
+  font-family: "JetBrains Mono", "Courier New", monospace;
+  font-size: 8px;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: var(--gray);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 15px;
+  height: 100px;
+  overflow: hidden;
+  user-select: none;
+`;
+
+const AsciiHeatmap = () => {
+  const [grid, setGrid] = useState([]);
+
+  useEffect(() => {
+    const generateGrid = () => {
+      const rows = 8;
+      const cols = 24;
+      const newGrid = [];
+      for (let i = 0; i < rows; i++) {
+        let row = [];
+        for (let j = 0; j < cols; j++) {
+          const val = Math.random();
+          let char = "█";
+          let color = "var(--green)";
+          if (val > 0.8) color = "var(--red)";
+          else if (val > 0.6) color = "var(--yellow)";
+          else if (val < 0.2) char = "░";
+          row.push({ char, color });
+        }
+        newGrid.push(row);
+      }
+      setGrid(newGrid);
+    };
+
+    generateGrid();
+    const timer = setInterval(generateGrid, 1500);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <HeatmapContainer>
+      <div style={{ marginBottom: "5px", opacity: 0.5, fontSize: "7px" }}>
+        GLOBAL_LATENCY_SCAN [v0.4]
+      </div>
+      {grid.map((row, i) => (
+        <div key={i}>
+          {row.map((cell, j) => (
+            <span key={j} style={{ color: cell.color }}>
+              {cell.char}
+            </span>
+          ))}
+        </div>
+      ))}
+    </HeatmapContainer>
+  );
+};
+
+// --- Scroll Animation Component ---
+const ScrollReveal = styled.div`
+  opacity: ${(props) => (props.isVisible ? 1 : 0)};
+  transform: ${(props) =>
+    props.isVisible ? "translateY(0)" : "translateY(40px)"};
+  transition:
+    opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const AnimatedSection = ({ children }) => {
+  const [isVisible, setVisible] = useState(false);
+  const domRef = useRef();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setVisible(true);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    const { current } = domRef;
+    if (current) observer.observe(current);
+    return () => current && observer.unobserve(current);
+  }, []);
+
+  return (
+    <ScrollReveal ref={domRef} isVisible={isVisible}>
+      {children}
+    </ScrollReveal>
+  );
+};
 
 // --- Styled Components ---
 const Navbar = styled.nav`
@@ -63,386 +220,457 @@ const Navbar = styled.nav`
   height: 64px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
+  justify-content: center;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--border);
   z-index: 1000;
+`;
 
-  @media (min-width: 768px) {
-    padding: 0 4rem;
-  }
+const NavContent = styled.div`
+  width: 100%;
+  max-width: 1100px;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 `;
 
 const Logo = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-`;
-
-const NavButtons = styled.div`
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-`;
-
-const Button = styled.button`
-  background: ${(props) => (props.primary ? "#fff" : "transparent")};
-  color: ${(props) => (props.primary ? "#000" : "#fff")};
-  border: 1px solid ${(props) => (props.primary ? "#fff" : "var(--border)")};
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    background: ${(props) =>
-      props.primary ? "#ccc" : "rgba(255,255,255,0.05)"};
-    border-color: #fff;
-  }
-
-  @media (max-width: 640px) {
-    display: ${(props) => (props.hideMobile ? "none" : "block")};
-  }
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
 `;
 
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 `;
 
 const Hero = styled.section`
   padding: 160px 0 80px;
   text-align: center;
-  animation: ${fadeIn} 0.8s ease-out;
+  animation: ${fadeIn} 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 `;
 
 const Badge = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 0.35rem 1rem;
+  background: var(--glass);
+  backdrop-filter: blur(8px);
   border: 1px solid var(--border);
   border-radius: 100px;
   font-size: 0.75rem;
-  color: var(--gray);
+  font-weight: 500;
+  color: var(--accent);
   margin-bottom: 2rem;
 
   &::before {
     content: "";
     width: 6px;
     height: 6px;
-    background: #00ff85;
+    background: var(--green);
     border-radius: 50%;
     animation: ${pulse} 2s infinite;
   }
 `;
 
 const Headline = styled.h1`
-  font-size: clamp(2.5rem, 8vw, 6rem);
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1;
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
   margin-bottom: 1.5rem;
-  background: linear-gradient(180deg, #fff 0%, #888 100%);
+  background: linear-gradient(180deg, #fff 30%, rgba(255, 255, 255, 0.5) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  width: 100%;
+  text-align: center;
 `;
 
-const Subline = styled.p`
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  color: var(--gray);
-  max-width: 600px;
-  margin: 0 auto 2.5rem;
-  line-height: 1.6;
-`;
-
-const FeatureGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin: 4rem 0;
-`;
-
-const FeatureCard = styled.div`
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.01);
-  border: 1px solid var(--border);
+const Button = styled.button`
+  background: ${(props) =>
+    props.primary ? "rgba(255, 255, 255, 0.95)" : "var(--glass)"};
+  color: ${(props) => (props.primary ? "#000" : "#fff")};
+  backdrop-filter: blur(12px);
+  border: 1px solid
+    ${(props) => (props.primary ? "transparent" : "var(--border)")};
+  padding: 0.8rem 1.6rem;
   border-radius: 12px;
-  text-align: left;
-  transition: border-color 0.3s ease;
-
-  &:hover {
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  h3 {
-    margin: 1rem 0 0.5rem;
-    font-size: 1.25rem;
-  }
-
-  p {
-    color: var(--gray);
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-`;
-
-const TerminalSection = styled.section`
-  margin: 80px 0;
-  background: #050505;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-`;
-
-const TerminalHeader = styled.div`
-  background: #111;
-  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border);
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
-  .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-  .red {
-    background: #ff5f56;
-  }
-  .yellow {
-    background: #ffbd2e;
-  }
-  .green {
-    background: #27c93f;
+  &:hover {
+    background: ${(props) =>
+      props.primary ? "#fff" : "rgba(255,255,255,0.08)"};
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
 `;
 
-const TerminalBody = styled.div`
-  padding: 1.5rem;
-  font-family: "Fira Code", "Courier New", monospace;
-  font-size: 0.9rem;
-  line-height: 1.7;
-  overflow-x: auto;
+const InfoCard = styled.div`
+  padding: 2.5rem;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-glass);
 
-  .command {
-    color: #00ff85;
+  &:hover {
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
   }
-  .comment {
-    color: #555;
+  h3 {
+    margin: 1.5rem 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 600;
   }
-  .string {
-    color: #3b82f6;
-  }
-  .group {
-    margin-bottom: 1.5rem;
-  }
-  h4 {
-    color: #fff;
-    margin-bottom: 0.5rem;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    opacity: 0.5;
+  p {
+    color: var(--gray);
+    line-height: 1.6;
+    font-size: 0.95rem;
   }
 `;
 
-// --- Main Component ---
+const TerminalWrapper = styled.div`
+  background: rgba(10, 10, 10, 0.6);
+  backdrop-filter: blur(30px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  margin: 4rem 0;
+  width: 100%;
+  max-width: 850px;
+  box-shadow: var(--shadow-heavy);
+`;
+
 const InterstellarLanding = () => {
+  const [activeTab, setActiveTab] = useState("install");
+  const [copied, setCopied] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
+  const [logs, setLogs] = useState([
+    { id: 1, text: "Fetching nodes from global registry...", type: "info" },
+    { id: 2, text: "main-api: ONLINE (24ms)", type: "success" },
+  ]);
+
+  const faqs = [
+    {
+      q: "How secure is Interstellar?",
+      a: "Very. We use a local-first approach. Your monitoring data and sensitive keys are encrypted and never leave your machine unless you configure a secure remote webhook.",
+    },
+    {
+      q: "Does it support automated alerts?",
+      a: "Yes. Interstellar can be configured to trigger local notifications or POST requests to your preferred communication tools (Slack, Discord, etc.) when latency spikes.",
+    },
+    {
+      q: "Can I use it in production?",
+      a: "Absolutely. It's designed with a minimal footprint specifically for high-load production environments where every megabyte of RAM counts.",
+    },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newLog = {
+        id: Date.now(),
+        text: `Node check: ${Math.random() > 0.1 ? "PASSED" : "RETRY"} (${Math.floor(Math.random() * 100)}ms)`,
+        type: Math.random() > 0.1 ? "success" : "warn",
+      };
+      setLogs((prev) => [newLog, ...prev].slice(0, 4));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const commands = {
+    install: "npm install -g @chuks2001/interstellar-cli",
+    nodes: "interstellar --listNode",
+    auth: "interstellar --signin <user> <pass>",
+  };
+
   return (
     <>
       <GlobalStyle />
       <Navbar>
-        <Logo>
-          <div
-            style={{ background: "#fff", padding: "4px", borderRadius: "4px" }}
+        <NavContent>
+          <Logo>
+            <div
+              style={{
+                background: "linear-gradient(135deg, #fff 0%, #aaa 100%)",
+                padding: "5px",
+                borderRadius: "8px",
+                display: "flex",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+              }}
+            >
+              <Terminal size={16} color="#000" strokeWidth={2.5} />
+            </div>
+            INTERSTELLAR
+          </Logo>
+          <Button
+            primary
+            style={{
+              padding: "0.5rem 1.2rem",
+              borderRadius: "100px",
+              fontSize: "0.8rem",
+            }}
+            onClick={() =>
+              window.open(
+                "https://www.npmjs.com/package/@chuks2001/interstellar-cli/v/1.0.1",
+              )
+            }
           >
-            <Terminal size={18} color="#000" />
-          </div>
-          Interstellar
-        </Logo>
-        <NavButtons>
-          <Button primary>Contact</Button>
-        </NavButtons>
+            Documentation
+          </Button>
+        </NavContent>
       </Navbar>
 
       <Container>
         <Hero>
-          <Badge>v1.0.1 Now Available</Badge>
-          <Headline>Check And Keep Your API Endpoints Alive</Headline>
-          <Subline>
-            The world's fastest CLI tool for monitoring distributed nodes.
-            Real-time pings, global health checks, and zero-config deployment.
-          </Subline>
-
-          <div
+          <Badge>v1.0.1 Global Infrastructure Active</Badge>
+          <Headline>Keep Your Distributed Systems Breathing</Headline>
+          <p
             style={{
-              display: "flex",
-              gap: "1rem",
-              justifyContent: "center",
-              flexWrap: "wrap",
+              color: "var(--gray)",
+              maxWidth: "600px",
+              margin: "0 auto 2.5rem",
+              lineHeight: "1.6",
+              textAlign: "center",
+              fontSize: "1.1rem",
             }}
           >
-            <a
-              href="https://www.npmjs.com/package/@chuks2001/interstellar-cli/v/1.0.1"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ textDecoration: "none" }}
+            The ultra-fast CLI tool for real-time API monitoring. Track
+            performance, manage nodes, and ensure 99.9% uptime.
+          </p>
+          <div style={{ display: "flex", gap: "1.2rem" }}>
+            <Button
+              primary
+              onClick={() =>
+                window.open(
+                  "https://www.npmjs.com/package/@chuks2001/interstellar-cli",
+                )
+              }
             >
-              <Button
-                primary
-                style={{ padding: "0.8rem 2rem", fontSize: "1rem" }}
-              >
-                Get Started{" "}
-                <ChevronRight
-                  size={16}
-                  style={{ verticalAlign: "middle", marginLeft: "4px" }}
-                />
-              </Button>
-            </a>
-            <a
-              href="https://github.com/Chuks256/Interstellar"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ textDecoration: "none" }}
+              Get Started <ChevronRight size={18} />
+            </Button>
+            <Button
+              onClick={() =>
+                window.open("https://github.com/Chuks256/Interstellar")
+              }
             >
-              <Button style={{ padding: "0.8rem 2rem", fontSize: "1rem" }}>
-                View GitHub
-              </Button>
-            </a>
+              View Repository
+            </Button>
           </div>
         </Hero>
 
-        <FeatureGrid>
-          <FeatureCard>
-            <Activity color="#00ff85" size={32} />
-            <h3>Real-time Uptime</h3>
-            <p>
-              Monitor your api endpoint in real time for free from your command
-              line.
-            </p>
-          </FeatureCard>
-          <FeatureCard>
-            <Shield color="#3b82f6" size={32} />
-            <h3>Secure Auth</h3>
-            <p>
-              Locally stored signing keys ensure your node management is private
-              and encrypted.
-            </p>
-          </FeatureCard>
-          <FeatureCard>
-            <Globe color="#a855f7" size={32} />
-            <h3>Distributed Network</h3>
-            <p>
-              Manage and track nodes across multiple machines with seamless
-              account continuity.
-            </p>
-          </FeatureCard>
-        </FeatureGrid>
-
-        <h2
-          style={{ textAlign: "center", fontSize: "2rem", marginTop: "4rem" }}
-        >
-          Command Reference
-        </h2>
-
-        <TerminalSection>
-          <TerminalHeader>
-            <div className="dot red" />
-            <div className="dot yellow" />
-            <div className="dot green" />
-            <span
-              style={{ fontSize: "0.7rem", opacity: 0.5, marginLeft: "10px" }}
+        <AnimatedSection>
+          <TerminalWrapper>
+            <div
+              style={{
+                display: "flex",
+                background: "rgba(255,255,255,0.03)",
+                borderBottom: "1px solid var(--border)",
+              }}
             >
-              bash — interstellar-cli
-            </span>
-          </TerminalHeader>
-          <TerminalBody>
-            <div className="group">
-              <h4>Installation</h4>
-              <p>
-                <span className="command">npm install</span> -g
-                @chuks2001/interstellar-cli
-              </p>
+              {Object.keys(commands).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  style={{
+                    padding: "14px 24px",
+                    background:
+                      activeTab === t
+                        ? "rgba(255,255,255,0.05)"
+                        : "transparent",
+                    color: activeTab === t ? "#fff" : "#666",
+                    border: "none",
+                    borderRight: "1px solid var(--border)",
+                    cursor: "pointer",
+                    fontFamily: "JetBrains Mono, monospace",
+                    fontSize: "0.75rem",
+                    transition: "0.2s",
+                  }}
+                >
+                  {t}.sh
+                </button>
+              ))}
             </div>
+            <div
+              style={{
+                padding: "28px",
+                fontFamily: "JetBrains Mono, monospace",
+                position: "relative",
+                minHeight: "220px",
+              }}
+            >
+              <button
+                onClick={() => handleCopy(commands[activeTab])}
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid var(--border)",
+                  color: "#fff",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+              >
+                {copied ? (
+                  <Check size={14} color="var(--green)" />
+                ) : (
+                  <Copy size={14} opacity={0.6} />
+                )}
+              </button>
+              <p style={{ color: "#444", marginBottom: "8px" }}>
+                #{" "}
+                {activeTab === "install"
+                  ? "Global installation"
+                  : "Command usage"}
+              </p>
+              <p>
+                <span style={{ color: "var(--green)" }}>$</span>{" "}
+                {commands[activeTab]}
+              </p>
+              <div style={{ marginTop: "32px", opacity: 0.4 }}>
+                {logs.map((log) => (
+                  <div
+                    key={log.id}
+                    style={{ fontSize: "0.7rem", marginBottom: "4px" }}
+                  >
+                    [{new Date(log.id).toLocaleTimeString()}] {log.text}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TerminalWrapper>
+        </AnimatedSection>
 
-            <div className="group">
-              <h4>Account Management</h4>
-              <p>
-                <span className="command">--createAccount</span>{" "}
-                <span className="string">&lt;user&gt; &lt;pass&gt;</span>{" "}
-                <span className="comment"># New secure account</span>
-              </p>
-              <p>
-                <span className="command">--signin</span>{" "}
-                <span className="string">&lt;user&gt; &lt;pass&gt;</span>{" "}
-                <span className="comment"># Access existing nodes</span>
-              </p>
-              <p>
-                <span className="command">--myInfo</span>{" "}
-                <span className="comment"># View account and machines</span>
-              </p>
+        <AnimatedSection>
+          <div style={{ padding: "4rem 0", width: "100%" }}>
+            <h2
+              style={{
+                textAlign: "center",
+                fontSize: "2.5rem",
+                marginBottom: "3rem",
+                fontWeight: 700,
+              }}
+            >
+              Built for Scale
+            </h2>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gap: "2rem",
+              }}
+            >
+              <InfoCard>
+                <Cpu color="var(--green)" size={32} strokeWidth={1.5} />
+                <h3>Minimal Footprint</h3>
+                <p>Efficient binaries that stay out of your way.</p>
+              </InfoCard>
+              <InfoCard>
+                <Lock color="var(--green)" size={32} strokeWidth={1.5} />
+                <h3>Local-First</h3>
+                <p>Your monitoring data never leaves your hardware.</p>
+              </InfoCard>
+              <InfoCard>
+                <MapIcon color="var(--green)" size={32} strokeWidth={1.5} />
+                <h3>Geographic Insight</h3>
+                <p>Real-time terminal heatmaps of node latency.</p>
+                <AsciiHeatmap />
+              </InfoCard>
             </div>
+          </div>
+        </AnimatedSection>
 
-            <div className="group">
-              <h4>Node Management</h4>
-              <p>
-                <span className="command">--createNode</span>{" "}
-                <span className="string">&lt;name&gt; &lt;url&gt;</span>
-              </p>
-              <p>
-                <span className="command">--listNode</span>{" "}
-                <span className="comment"># Status of all endpoints</span>
-              </p>
-              <p>
-                <span className="command">--deleteNode</span>{" "}
-                <span className="string">&lt;name&gt;</span>
-              </p>
-              <p>
-                <span className="command">--updateNodeUrl</span>{" "}
-                <span className="string">&lt;name&gt; &lt;newUrl&gt;</span>
-              </p>
-            </div>
+        {/* New FAQ Section */}
+        <AnimatedSection>
+          <h2
+            style={{
+              textAlign: "center",
+              fontSize: "2rem",
+              marginBottom: "2rem",
+              fontWeight: 700,
+            }}
+          >
+            Common Queries
+          </h2>
+          <FAQContainer>
+            {faqs.map((faq, i) => (
+              <FAQItem key={i}>
+                <FAQHeader onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  <FAQQuestion>{faq.q}</FAQQuestion>
+                  <ChevronDown
+                    size={18}
+                    style={{
+                      transform: openFaq === i ? "rotate(180deg)" : "none",
+                      transition: "0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                      opacity: 0.5,
+                    }}
+                  />
+                </FAQHeader>
+                <FAQAnswer isOpen={openFaq === i}>{faq.a}</FAQAnswer>
+              </FAQItem>
+            ))}
+          </FAQContainer>
+        </AnimatedSection>
 
-            <div className="group">
-              <h4>General</h4>
-              <p>
-                <span className="command">--help</span>{" "}
-                <span className="comment"># Comprehensive reference</span>
-              </p>
-              <p>
-                <span className="command">--version</span>
-              </p>
-            </div>
-          </TerminalBody>
-        </TerminalSection>
+        <footer
+          style={{
+            padding: "100px 0 60px",
+            textAlign: "center",
+            borderTop: "1px solid var(--border)",
+            width: "100%",
+          }}
+        >
+          <p
+            style={{
+              color: "var(--gray)",
+              fontSize: "0.8rem",
+              letterSpacing: "0.05em",
+            }}
+          >
+            &copy; {new Date().getFullYear()} INTERSTELLAR CLI // DISTRIBUTED
+            PROTOCOLS
+          </p>
+        </footer>
       </Container>
-
-      <footer
-        style={{
-          padding: "4rem 1.5rem",
-          borderTop: "1px solid var(--border)",
-          textAlign: "center",
-        }}
-      >
-        <div style={{ opacity: 0.4, fontSize: "0.8rem" }}>
-          &copy; {new Date().getFullYear()} Interstellar CLI. Built for the
-          distributed web.
-        </div>
-      </footer>
     </>
   );
 };
