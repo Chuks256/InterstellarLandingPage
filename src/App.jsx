@@ -1,20 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
-import { Terminal, Globe, Activity, ChevronRight, Shield } from "lucide-react";
+
+import {
+  Terminal,
+  Globe,
+  Zap,
+  Activity,
+  Menu,
+  X,
+  ChevronRight,
+  Shield,
+  Database,
+  Cpu,
+  Command,
+} from "lucide-react";
 
 // --- Animations ---
 const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+`;
+
+const pulse = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(0, 255, 133, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 255, 133, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 255, 133, 0); }
 `;
 
 // --- Global Styles ---
 const GlobalStyle = createGlobalStyle`
   :root {
-    --bg: #050505;
+    --bg: #000000;
     --accent: #ffffff;
     --gray: #888888;
-    --border: rgba(255, 255, 255, 0.08);
+    --border: rgba(255, 255, 255, 0.1);
   }
 
   * {
@@ -25,16 +44,14 @@ const GlobalStyle = createGlobalStyle`
 
   body {
     background-color: var(--bg);
-    /* Subtle Grid Pattern from your reference image */
-    background-image: 
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 40px 40px;
     color: var(--accent);
-    font-family: 'Inter', -apple-system, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
-    display: flex;
-    justify-content: center;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(255, 255, 255, 0.2);
   }
 `;
 
@@ -43,280 +60,378 @@ const Navbar = styled.nav`
   position: fixed;
   top: 0;
   width: 100%;
-  height: 70px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 5%;
-  background: rgba(5, 5, 5, 0.8);
-  backdrop-filter: blur(10px);
+  padding: 0 1.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   z-index: 1000;
+
+  @media (min-width: 768px) {
+    padding: 0 4rem;
+  }
 `;
 
-const LogoWrapper = styled.div`
+const Logo = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-
-  img {
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-  }
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  cursor: pointer;
 `;
 
-const NavLinks = styled.div`
+const NavButtons = styled.div`
   display: flex;
-  gap: 30px;
-  font-size: 0.85rem;
-  color: var(--gray);
-
-  span {
-    cursor: pointer;
-    transition: color 0.2s;
-    &:hover {
-      color: #fff;
-    }
-  }
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const MainContainer = styled.div`
-  width: 100%;
-  max-width: 1100px;
-  margin-top: 150px;
-  padding: 0 20px;
-  display: flex;
-  flex-direction: column;
+  gap: 1rem;
   align-items: center;
+`;
+
+const Button = styled.button`
+  background: ${(props) => (props.primary ? "#fff" : "transparent")};
+  color: ${(props) => (props.primary ? "#000" : "#fff")};
+  border: 1px solid ${(props) => (props.primary ? "#fff" : "var(--border)")};
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${(props) =>
+      props.primary ? "#ccc" : "rgba(255,255,255,0.05)"};
+    border-color: #fff;
+  }
+
+  @media (max-width: 640px) {
+    display: ${(props) => (props.hideMobile ? "none" : "block")};
+  }
+`;
+
+const Container = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 `;
 
 const Hero = styled.section`
+  padding: 160px 0 80px;
   text-align: center;
-  max-width: 800px;
-  animation: ${fadeIn} 1s ease-out;
+  animation: ${fadeIn} 0.8s ease-out;
+`;
+
+const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-bottom: 2rem;
+
+  &::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: #00ff85;
+    border-radius: 50%;
+    animation: ${pulse} 2s infinite;
+  }
 `;
 
 const Headline = styled.h1`
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2.5rem, 8vw, 6rem);
   font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 24px;
-  /* Pixel font feel */
-  font-family: "Courier New", Courier, monospace;
-  letter-spacing: -1px;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(180deg, #fff 0%, #888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 `;
 
 const Subline = styled.p`
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 2vw, 1.25rem);
   color: var(--gray);
-  margin-bottom: 40px;
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
   line-height: 1.6;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-  margin-bottom: 100px;
-`;
-
-const PrimaryButton = styled.button`
-  background: #fff;
-  color: #000;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: opacity 0.2s;
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-
-const GhostButton = styled.button`
-  background: transparent;
-  color: #fff;
-  border: 1px solid var(--border);
-  padding: 12px 28px;
-  border-radius: 6px;
-  cursor: pointer;
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
 `;
 
 const FeatureGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  width: 100%;
-  margin-bottom: 100px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 4rem 0;
 `;
 
-const Card = styled.div`
-  background: rgba(255, 255, 255, 0.03);
+const FeatureCard = styled.div`
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.01);
   border: 1px solid var(--border);
-  padding: 30px;
   border-radius: 12px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
+  text-align: left;
+  transition: border-color 0.3s ease;
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
 
   h3 {
-    font-size: 1rem;
-    font-family: monospace;
+    margin: 1rem 0 0.5rem;
+    font-size: 1.25rem;
   }
+
   p {
-    font-size: 0.9rem;
     color: var(--gray);
+    font-size: 0.95rem;
+    line-height: 1.5;
   }
 `;
 
-const TerminalContainer = styled.div`
-  width: 100%;
-  background: #000;
+const TerminalSection = styled.section`
+  margin: 80px 0;
+  background: #050505;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 100px;
 `;
 
 const TerminalHeader = styled.div`
   background: #111;
-  padding: 12px 20px;
+  padding: 0.75rem 1.25rem;
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 0.5rem;
   border-bottom: 1px solid var(--border);
+
   .dot {
     width: 10px;
     height: 10px;
     border-radius: 50%;
   }
+  .red {
+    background: #ff5f56;
+  }
+  .yellow {
+    background: #ffbd2e;
+  }
+  .green {
+    background: #27c93f;
+  }
 `;
 
+const TerminalBody = styled.div`
+  padding: 1.5rem;
+  font-family: "Fira Code", "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  overflow-x: auto;
+
+  .command {
+    color: #00ff85;
+  }
+  .comment {
+    color: #555;
+  }
+  .string {
+    color: #3b82f6;
+  }
+  .group {
+    margin-bottom: 1.5rem;
+  }
+  h4 {
+    color: #fff;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+`;
+
+// --- Main Component ---
 const InterstellarLanding = () => {
   return (
     <>
       <GlobalStyle />
       <Navbar>
-        <LogoWrapper>
-          <img src="Rectangle 5.png" alt="Logo" />
+        <Logo>
+          <div
+            style={{ background: "#fff", padding: "4px", borderRadius: "4px" }}
+          >
+            <Terminal size={18} color="#000" />
+          </div>
           Interstellar
-        </LogoWrapper>
-        <NavLinks>
-          <span>About</span>
-          <span>Blog</span>
-          <span>Documentation</span>
-        </NavLinks>
+        </Logo>
         <NavButtons>
-          <PrimaryButton style={{ padding: "8px 16px", fontSize: "0.8rem" }}>
-            Contact
-          </PrimaryButton>
+          <Button primary>Contact</Button>
         </NavButtons>
       </Navbar>
 
-      <MainContainer>
+      <Container>
         <Hero>
+          <Badge>v1.0.1 Now Available</Badge>
           <Headline>Check And Keep Your API Endpoints Alive</Headline>
           <Subline>
-            Monitor your api endpoint in real time
-            <br />
-            For free from your command line
+            The world's fastest CLI tool for monitoring distributed nodes.
+            Real-time pings, global health checks, and zero-config deployment.
           </Subline>
 
-          <ButtonGroup>
-            <PrimaryButton>Get Started</PrimaryButton>
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              justifyContent: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <Button
+              primary
+              style={{ padding: "0.8rem 2rem", fontSize: "1rem" }}
+            >
+              Get Started{" "}
+              <ChevronRight
+                size={16}
+                style={{ verticalAlign: "middle", marginLeft: "4px" }}
+              />
+            </Button>
             <a
               href="https://github.com/Chuks256/Interstellar"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               style={{ textDecoration: "none" }}
             >
-              <GhostButton>Learn more</GhostButton>
+              <Button style={{ padding: "0.8rem 2rem", fontSize: "1rem" }}>
+                View GitHub
+              </Button>
             </a>
-          </ButtonGroup>
+          </div>
         </Hero>
 
         <FeatureGrid>
-          <Card>
-            <Activity color="#00ff85" />
+          <FeatureCard>
+            <Activity color="#00ff85" size={32} />
             <h3>Real-time Uptime</h3>
-            <p>Instant status checks for your services.</p>
-          </Card>
-          <Card>
-            <Shield color="#3b82f6" />
+            <p>
+              Monitor your api endpoint in real time for free from your command
+              line.
+            </p>
+          </FeatureCard>
+          <FeatureCard>
+            <Shield color="#3b82f6" size={32} />
             <h3>Secure Auth</h3>
-            <p>Private keys stored safely on your machine.</p>
-          </Card>
-          <Card>
-            <Globe color="#a855f7" />
-            <h3>Global Network</h3>
-            <p>Monitor from multiple regions effortlessly.</p>
-          </Card>
+            <p>
+              Locally stored signing keys ensure your node management is private
+              and encrypted.
+            </p>
+          </FeatureCard>
+          <FeatureCard>
+            <Globe color="#a855f7" size={32} />
+            <h3>Distributed Network</h3>
+            <p>
+              Manage and track nodes across multiple machines with seamless
+              account continuity.
+            </p>
+          </FeatureCard>
         </FeatureGrid>
 
-        <TerminalContainer>
+        <h2
+          style={{ textAlign: "center", fontSize: "2rem", marginTop: "4rem" }}
+        >
+          Command Reference
+        </h2>
+
+        <TerminalSection>
           <TerminalHeader>
-            <div className="dot" style={{ background: "#ff5f56" }} />
-            <div className="dot" style={{ background: "#ffbd2e" }} />
-            <div className="dot" style={{ background: "#27c93f" }} />
+            <div className="dot red" />
+            <div className="dot yellow" />
+            <div className="dot green" />
             <span
-              style={{ color: "#555", fontSize: "0.7rem", marginLeft: "10px" }}
+              style={{ fontSize: "0.7rem", opacity: 0.5, marginLeft: "10px" }}
             >
               bash — interstellar-cli
             </span>
           </TerminalHeader>
-          <div
-            style={{
-              padding: "20px",
-              fontFamily: "monospace",
-              fontSize: "0.9rem",
-              lineHeight: "1.6",
-            }}
-          >
-            <p>
-              <span style={{ color: "#00ff85" }}>$ npm install</span> -g
-              @chuks2001/interstellar-cli
-            </p>
-            <p style={{ color: "#555" }}># Create your first node</p>
-            <p>
-              <span style={{ color: "#00ff85" }}>$ interstellar</span>{" "}
-              --createNode main-api https://api.yoursite.com
-            </p>
-          </div>
-        </TerminalContainer>
+          <TerminalBody>
+            <div className="group">
+              <h4>Installation</h4>
+              <p>
+                <span className="command">npm install</span> -g
+                @chuks2001/interstellar-cli
+              </p>
+            </div>
 
-        <footer
-          style={{
-            padding: "40px",
-            borderTop: "1px solid var(--border)",
-            width: "100%",
-            textAlign: "center",
-          }}
-        >
-          <p style={{ opacity: 0.3, fontSize: "0.7rem" }}>
-            &copy; 2026 INTERSTELLAR CLI // DISTRIBUTED SYSTEMS
-          </p>
-        </footer>
-      </MainContainer>
+            <div className="group">
+              <h4>Account Management</h4>
+              <p>
+                <span className="command">--createAccount</span>{" "}
+                <span className="string">&lt;user&gt; &lt;pass&gt;</span>{" "}
+                <span className="comment"># New secure account</span>
+              </p>
+              <p>
+                <span className="command">--signin</span>{" "}
+                <span className="string">&lt;user&gt; &lt;pass&gt;</span>{" "}
+                <span className="comment"># Access existing nodes</span>
+              </p>
+              <p>
+                <span className="command">--myInfo</span>{" "}
+                <span className="comment"># View account and machines</span>
+              </p>
+            </div>
+
+            <div className="group">
+              <h4>Node Management</h4>
+              <p>
+                <span className="command">--createNode</span>{" "}
+                <span className="string">&lt;name&gt; &lt;url&gt;</span>
+              </p>
+              <p>
+                <span className="command">--listNode</span>{" "}
+                <span className="comment"># Status of all endpoints</span>
+              </p>
+              <p>
+                <span className="command">--deleteNode</span>{" "}
+                <span className="string">&lt;name&gt;</span>
+              </p>
+              <p>
+                <span className="command">--updateNodeUrl</span>{" "}
+                <span className="string">&lt;name&gt; &lt;newUrl&gt;</span>
+              </p>
+            </div>
+
+            <div className="group">
+              <h4>General</h4>
+              <p>
+                <span className="command">--help</span>{" "}
+                <span className="comment"># Comprehensive reference</span>
+              </p>
+              <p>
+                <span className="command">--version</span>
+              </p>
+            </div>
+          </TerminalBody>
+        </TerminalSection>
+      </Container>
+
+      <footer
+        style={{
+          padding: "4rem 1.5rem",
+          borderTop: "1px solid var(--border)",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ opacity: 0.4, fontSize: "0.8rem" }}>
+          &copy; 2026 Interstellar CLI. Built for the distributed web.
+        </div>
+      </footer>
     </>
   );
 };
