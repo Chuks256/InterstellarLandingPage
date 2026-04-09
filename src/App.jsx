@@ -18,6 +18,7 @@ import {
   Share2,
   Code,
 } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 
 // --- Animations ---
 const fadeIn = keyframes`
@@ -671,6 +672,7 @@ const InterstellarLanding = () => {
           </p>
         </footer>
       </Container>
+      <Analytics />
     </>
   );
 };
